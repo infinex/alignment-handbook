@@ -91,6 +91,23 @@ def main():
     ################
     tokenizer = get_tokenizer(model_args, data_args)
 
+    ################
+    # Add tokenizer config
+    ################
+    tokenizer.pad_token = tokenizer.eos_token
+    tokenizer.padding_side = "right"  # Fix weird overflow issue with fp16 training
+    tokenizer.chat_template = """
+{% for message in messages %}
+    {% if message['role'] == 'user' %}
+{{ "USER:\n" + message['content'] + " \n\n"}}
+    {% elif message['role'] == 'system' %}
+{{ message['content'] + "\n"}}
+    {% elif message['role'] == 'assistant' %}
+{{ "ASSISTANT:\n" + message['content'] + " \n\n"}}
+    {% endif %}
+{% endfor %}
+"""
+
     #####################
     # Apply chat template
     #####################
